@@ -1,0 +1,51 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-tests:
+    name: Integration tests (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.15"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.5.2
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Build and start API container
+        run: docker compose up -d --build --wait
+
+      - name: Run integration tests against container
+        env:
+          API_BASE_URL: http://localhost:8000
+        run: poetry run pytest -m integration -v
+
+      - name: Show container logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop API container
+        if: always()
+        run: docker compose down

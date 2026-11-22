@@ -1,0 +1,18 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: py_api:local
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      PY_API_ENVIRONMENT: ${PY_API_ENVIRONMENT:-docker}
+      PY_API_DEBUG: ${PY_API_DEBUG:-false}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health-check', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
