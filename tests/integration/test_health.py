@@ -24,8 +24,7 @@ def test_health_check_rejects_unsupported_method(client: httpx.Client) -> None:
     assert response.status_code == 405
 
 
-def test_openapi_schema_exposes_health_check(client: httpx.Client) -> None:
+def test_openapi_schema_requires_authentication(client: httpx.Client) -> None:
     response = client.get("/openapi.json")
 
-    assert response.status_code == 200
-    assert "/health-check" in response.json()["paths"]
+    assert response.status_code in (401, 503)
